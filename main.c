@@ -1,6 +1,6 @@
 /*
  * Nombre del archivo:   main.c
- * Autor:
+ * Autor:Frezzini
  *
  * Descripción: 
  *      El sistema debe contar cuantas veces se presiona cada tecla (TEC1, TEC2,
@@ -75,38 +75,129 @@ uint8_t uart_rx_byte(uint8_t *dato);
 void uart_tx_byte(uint8_t dato);
 
 /* ------------------------ Implementación de funciones --------------------- */
-void main(void) {                       // Función principal
+void main(void) { // Función principal
     char dato_recibido;
-    
-    gpio_config();                      // Inicializo las entradas y salidas
-    uart_config();                      // Configuro la UART
-    
+    int error;
+    int cont_tec1, cont_tec2, cont_tec3, cont_tec4;
+
+    cont_tec1 = 0;
+    cont_tec2 = 0;
+    cont_tec3 = 0;
+    cont_tec4 = 0;
+
+    gpio_config(); // Inicializo las entradas y salidas
+    uart_config(); // Configuro la UART
+
+    PIN_LED_ROJO = 0;
+    PIN_LED_VERDE = 0;
+
+
     printf("Sistema inicializado!\r\n");
     printf("---------------------\r\n");
-    
-    while(1) {                          // Super loop
+
+    while (1) { // Super loop
         // Ver este link: https://pbs.twimg.com/media/BafQje7CcAAN5en.jpg
-        
-        // TODO: Completar las acciones de las teclas
-        
-        if( uart_rx_byte( &dato_recibido ) ) {
-            // TODO: Completar las acciones de los comandos
+
+        if (PIN_TEC1 == 0) {
+            __delay_ms(40); //Antirrebote    
+            cont_tec1++;
+            while (PIN_TEC1 == 0);
+            __delay_ms(40);
         }
-    }
+
+        if (PIN_TEC2 == 0);
+        {
+            uart_tx_byte('D');
+            while (PIN_TEC2 == 0);
+            cont_tec2++;
+            __delay_ms(40);
+        }
+        if (PIN_TEC3 == 0) {
+            __delay_ms(40); //Antirrebote  
+            cont_tec3++;
+            while (PIN_TEC3 == 0);
+            __delay_ms(40);
+        }
+
+        if (PIN_TEC4 == 0) {
+            __delay_ms(40); //Antirrebote  
+            cont_tec4++;
+            while (PIN_TEC4 == 0);
+            __delay_ms(40);
+        }
+        // TODO: Completar las acciones de las teclas
+
+        if (uart_rx_byte(&dato_recibido)) {
+            if (dato_recibido == 'Q') {
+                printf("---------\r\n");
+
+                printf("TEC1 = %d\r\n", cont_tec1);
+                printf("TEC2 = %d\r\n", cont_tec2");       
+                        printf("TEC3 = %d\r\n", cont_tec3");
+                        printf("TEC4 = %d\r\n", cont_tec4");
+
+                        printf("---------\r\n");
+
+                        PIN_LED_VERDE = 1;
+                        __delay_ms(100);
+                        PIN_LED_VERDE = 0;
+
+            }
+            if (dato_recibido == 'D') {
+
+                for (idx = 0; idx < 4; idx++)
+                            cont[idx] = 0;
+                            PIN_LED VERDE = 1;
+                            __delay_ms(100);
+                            PIN_LED_VERDE = 0;
+                }
+                else{
+                     PIN_LED_ROJO = 1;
+                     __delay_ms(100);
+                     PIN_LED_ROJO = 0
+                }
+                // TODO: Completar las acciones de los comandos
+            }
+        }
     
     // NO DEBE LLEGAR NUNCA AQUÍ, debido a que este programa se ejecuta
     // directamente sobre un microcontrolador y no es llamado por un ningún
     // sistema operativo, como en el caso de un programa para PC.
-    
-    return;
-}
 
-void gpio_config() {    
-    // TODO: Completar inicialización de entradas y salidas
+    return;
+
+
+void gpio_config() {
+
+    ANSEL = 0; // Configuro todas las entradas
+            ANSELH = 0; //   como digitales
+
+            TRIS_TEC1 = 1;
+            TRIS_TEC2 = 1;
+            TRIS_TEC3 = 1;
+            TRIS_TEC4 = 1;
+
+            TRIS_LED_VERDE = 0;
+            TRIS_LED_ROJO = 0;
+
+
+            // TODO: Completar inicialización de entradas y salidas
 }
 
 void uart_config() {
-    // TODO: Completa configuración de la UART
+
+    TXSTAbits.TX9 = 0; //Transmision de 8 bit
+            TXSTAbits.TXEN = 1; //Habilita trnsmision
+            TXSTAbits.SYNC = 0; //Modo asincronico
+
+            TXSTAbits.BRGH = 0;
+            BAUDCTLbits.BRG16 - 1;
+            SPBRG - 25; //Baudrate 9600 con cristal de 4MHz
+
+            RCSTAbits.SPEN = 1; //Habilito el puerto serie
+            RCSTAbits.RX9 = 0; //Resepcion de 8 bits
+            RCSTAbits.CREN = 1; //Habilita recepcion
+            // TODO: Completa configuración de la UART
 }
 
 /**
@@ -116,10 +207,11 @@ void uart_config() {
  * @note    Define la salida estandar para la librería stdio
  */
 void putch(char data) {
-    while (PIR1bits.TXIF == 0)   //Espera que haya espacio en la FIFO
+    while (PIR1bits.TXIF == 0) //Espera que haya espacio en la FIFO
+
         continue;
-    TXREG = data;   //Envía el byte
-}
+        TXREG = data; //Envía el byte
+    }
 
 /**
  * @brief	Toma un byte de la entrada stdin en forma bloqueante
@@ -127,10 +219,11 @@ void putch(char data) {
  * @note    Define la entrada estandar para la librería stdio
  */
 char getch(void) {
-    while (PIR1bits.RCIF == 0)   //Espera hasta que haya un byte recibido
+    while (PIR1bits.RCIF == 0) //Espera hasta que haya un byte recibido
+
         continue;
-    return RCREG;   //retorna lo recibido
-}
+        return RCREG; //retorna lo recibido
+    }
 
 /**
  * @brief	Envía un byte a la salida stdout en forma bloqueante pero por poco tiempo
@@ -138,11 +231,12 @@ char getch(void) {
  * @return	Nada
  * @note    Define la salida estandar para la librería stdio
  */
-void uart_tx_byte( uint8_t dato ) {
-    while (PIR1bits.TXIF == 0)   //Espera que haya espacio en la FIFO
+void uart_tx_byte(uint8_t dato) {
+    while (PIR1bits.TXIF == 0) //Espera que haya espacio en la FIFO
+
         continue;
-    TXREG = dato;   //Envía el byte
-}
+        TXREG = dato; //Envía el byte
+    }
 
 /**
  * @brief       Toma un byte de la FIFO de recepción en forma no bloqueante,
@@ -150,7 +244,7 @@ void uart_tx_byte( uint8_t dato ) {
  * @param[out]  dato    Apunta al destino para el byte recibido
  * @return      1 si hay un byte recibido, 0 si no hay dato disponible 
  */
-uint8_t uart_rx_byte( uint8_t *dato ) {
+uint8_t uart_rx_byte(uint8_t *dato) {
     if (PIR1bits.RCIF == 1) {
         *dato = RCREG;
         return 1;
